@@ -3,9 +3,12 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <filesystem>
 
 #include "linux_parser.h"
 
+using std::filesystem::directory_iterator;
+using std::filesystem::is_directory;
 using std::stof;
 using std::string;
 using std::to_string;
@@ -47,25 +50,20 @@ string LinuxParser::Kernel() {
   return kernel;
 }
 
-// BONUS: Update this to use std::filesystem
+
 vector<int> LinuxParser::Pids() {
   vector<int> pids;
-  DIR* directory = opendir(kProcDirectory.c_str());
-  struct dirent* file;
-  while ((file = readdir(directory)) != nullptr) {
-    // Is this a directory?
-    if (file->d_type == DT_DIR) {
-      // Is every character of the name a digit?
-      string filename(file->d_name);
-      if (std::all_of(filename.begin(), filename.end(), isdigit)) {
-        int pid = stoi(filename);
-        pids.push_back(pid);
-      }
+  for (const auto &entry: directory_iterator(kProcDirectory)) {
+    string filename = entry.path().filename();
+    if (entry.is_directory() && std::all_of(filename.begin(), filename.begin(), isdigit)) {
+      int pid = stoi(filename);
+      pids.push_back(pid);
     }
   }
-  closedir(directory);
   return pids;
 }
+
+
 
 // TODO: Read and return the system memory utilization
 float LinuxParser::MemoryUtilization() { return 0.0; }
